@@ -6,7 +6,6 @@ float ktp::generateRand(float min, float max) {
 }
 
 ktp::World::~World() {
-  delete[] world_pixels_;
   delete[] world_grains_;
 }
 
@@ -32,20 +31,20 @@ void ktp::World::init(const SDL2_Renderer& ren, int rows, int cols) {
 
   world_texture_.setRenderer(ren);
   world_texture_.create(SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, {cols, rows});
-  world_pitch_ = cols * sizeof(Uint32);
   rows_ = rows;
   cols_ = cols;
   first_grain_ = rows * cols;
 
-  world_pixels_ = new Uint32[rows * cols];
   world_grains_ = new Grain*[rows * cols];
 
+  world_texture_.lock((void**)&world_pixels_, &texture_pitch_);
   for (auto i = 0; i < rows; ++i) {
     for (auto j = 0; j < cols; ++j) {
-      world_pixels_[index(i, j)] = kDefaultColor_;
       world_grains_[index(i, j)] = nullptr;
+      world_pixels_[index(i, j)] = kDefaultColor_;
     }
   }
+  world_texture_.unlock();
 
   grains_.reserve(rows * cols);
 
@@ -53,19 +52,14 @@ void ktp::World::init(const SDL2_Renderer& ren, int rows, int cols) {
 }
 
 void ktp::World::update() {
-  if (SDL2_Timer::getSDL2Ticks() - sand_time_ > 10) {
-    addGrain({static_cast<int>(cols_ * generateRand(0, 1)), 0});
-    //addGrain({0, 0});
-    //addGrain({cols_ / 2, 0});
-    //addGrain({cols_ - 1, 0});
-    sand_time_ = SDL2_Timer::getSDL2Ticks();
-  }
 
-  for (auto i = rows_ - 2; i >= 0; --i) {
+  world_texture_.lock((void**)&world_pixels_, &texture_pitch_);
+
+  for (auto i = rows_ - 1; i >= 0; --i) {
     for (auto j = cols_ - 1; j >= 0; --j) {
       if (world_grains_[index(i, j)] != nullptr) {
         // look down
-        if (world_grains_[index(i + 1, j)] == nullptr) {
+        if (world_grains_[index(i + 1, j)] == nullptr && i != rows_ - 1) {
           movePixel(index(i, j), 0, 1);
         } else if (direction_) {
           // look down right
@@ -86,10 +80,22 @@ void ktp::World::update() {
           }
           direction_ = !direction_;
         }
+      // pixel is nullptr
+      } else {
+        world_pixels_[index(i, j)] = kDefaultColor_;
       }
     }
   }
-  world_texture_.update(world_pixels_, world_pitch_);
+
+  if (SDL2_Timer::getSDL2Ticks() - sand_time_ > 10) {
+    addGrain({static_cast<int>(cols_ * generateRand(0, 1)), 0});
+    //addGrain({0, 0});
+    //addGrain({cols_ / 2, 0});
+    //addGrain({cols_ - 1, 0});
+    sand_time_ = SDL2_Timer::getSDL2Ticks();
+  }
+  
+  world_texture_.unlock();
 }
 
 void ktp::World::movePixel(Uint32 origin, int x_offset, int y_offset) {

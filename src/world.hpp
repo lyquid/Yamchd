@@ -29,7 +29,7 @@ class World {
   template<typename T>
   inline Uint32 index(T i, T j) const { return i * cols_ + j; }
   inline Uint32 index(const SDL_Point& pos) const { return pos.y * cols_ + pos.x; }
-  inline Uint32 index(const SDL_FPoint& pos) const { return pos.y * cols_ + pos.x; }
+  inline Uint32 index(const SDL_FPoint& pos) const { return static_cast<Uint32>(pos.y * cols_ + pos.x); }
   void movePixel(Uint32 origin, int x_offset, int y_offset);
 
   static constexpr Uint32 kDefaultColor_ {ColorsARGB8::dark_blue};
@@ -37,12 +37,13 @@ class World {
 
   // final texture to be updated
   SDL2_Texture world_texture_ {};
-  // an array of pixels in ARGB8 format to be updated to the wolrd_texture_
+  // pointer to the array of pixels returned by texture.lock()
   Uint32* world_pixels_ {nullptr};
   // an array of addresses to the actual Grain objects
   Grain** world_grains_ {nullptr};
-  // this is used to update the world_texture_. It's the number of bytes in a row
-  unsigned int world_pitch_ {};
+  // It's the number of bytes in a row returned by texture.lock()
+  int texture_pitch_ {};
+
   int rows_ {}, cols_ {};
   // the actual grain information is stored here
   std::vector<Grain> grains_ {};

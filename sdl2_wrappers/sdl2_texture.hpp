@@ -77,6 +77,30 @@ class SDL2_Texture {
   bool loadFromTextSolid(const SDL2_Font& font, const std::string& text, const SDL_Color& color);
 
   /**
+   * Lock a texture for write-only pixel access.
+   * @param pixels This is filled in with a pointer to the locked pixels, 
+   *                appropriately offset by the locked area.
+   * @param pitch This is filled in with the pitch of the locked pixels; 
+   *              the pitch is the length of one row in bytes
+   */
+  inline void lock(void** pixels, int* pitch) {
+    SDL_LockTexture(texture_.get(), NULL, pixels, pitch);
+  }
+
+  /**
+   * Lock a portion of the texture for write-only pixel access.
+   * @param rect An SDL_Rect structure representing the area to lock for access; 
+   *              NULL to lock the entire texture.
+   * @param pixels This is filled in with a pointer to the locked pixels, 
+   *                appropriately offset by the locked area.
+   * @param pitch This is filled in with the pitch of the locked pixels; 
+   *              the pitch is the length of one row in bytes
+   */
+  inline void lock(const SDL_Rect* rect, void** pixels, int* pitch) {
+    SDL_LockTexture(texture_.get(), rect, pixels, pitch);
+  }
+
+  /**
    * Query the attributes of a texture.
    * @param texture The texture to query.
    * @param format A pointer filled in with the raw format of the texture; the 
@@ -172,6 +196,13 @@ class SDL2_Texture {
    */
   inline void update(const void* pixels, int pitch) {
     SDL_UpdateTexture(texture_.get(), NULL, pixels, pitch);
+  }
+
+  /**
+   * Unlocks a texture, uploading the changes to video memory, if needed.
+   */
+  inline void unlock() {
+    SDL_UnlockTexture(texture_.get());
   }
 
   /**
