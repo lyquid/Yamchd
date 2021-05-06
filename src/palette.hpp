@@ -55,23 +55,23 @@ namespace Colors {
 
 namespace ColorsARGB8 {
 
-inline constexpr Uint32 black        {0xFF2e2c3b};
-inline constexpr Uint32 dark_blue    {0xFF3e415f};
-inline constexpr Uint32 dark_grey    {0xFF55607d};
-inline constexpr Uint32 grey         {0xFF747d88};
-inline constexpr Uint32 copper_green {0xFF41de95};
-inline constexpr Uint32 turquoise    {0xFF2aa4aa};
-inline constexpr Uint32 blue         {0xFF3b77a6};
-inline constexpr Uint32 dark_green   {0xFF249337};
-inline constexpr Uint32 green        {0xFF56be44};
-inline constexpr Uint32 yellow       {0xFFc6de78};
-inline constexpr Uint32 dark_yellow  {0xFFf3c220};
-inline constexpr Uint32 orange       {0xFFc4651c};
-inline constexpr Uint32 red          {0xFFb54131};
-inline constexpr Uint32 violet       {0xFF61407a};
-inline constexpr Uint32 purple       {0xFF8f3da7};
-inline constexpr Uint32 pink         {0xFFea619d};
-inline constexpr Uint32 white        {0xFFc1e5ea};
+  inline constexpr Uint32 black        {0xFF2e2c3b};
+  inline constexpr Uint32 dark_blue    {0xFF3e415f};
+  inline constexpr Uint32 dark_grey    {0xFF55607d};
+  inline constexpr Uint32 grey         {0xFF747d88};
+  inline constexpr Uint32 copper_green {0xFF41de95};
+  inline constexpr Uint32 turquoise    {0xFF2aa4aa};
+  inline constexpr Uint32 blue         {0xFF3b77a6};
+  inline constexpr Uint32 dark_green   {0xFF249337};
+  inline constexpr Uint32 green        {0xFF56be44};
+  inline constexpr Uint32 yellow       {0xFFc6de78};
+  inline constexpr Uint32 dark_yellow  {0xFFf3c220};
+  inline constexpr Uint32 orange       {0xFFc4651c};
+  inline constexpr Uint32 red          {0xFFb54131};
+  inline constexpr Uint32 violet       {0xFF61407a};
+  inline constexpr Uint32 purple       {0xFF8f3da7};
+  inline constexpr Uint32 pink         {0xFFea619d};
+  inline constexpr Uint32 white        {0xFFc1e5ea};
 
 } // end namespace ColorsARGB8
 
