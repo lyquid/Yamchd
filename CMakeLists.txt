@@ -1,42 +1,33 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(Yamchd VERSION 0.1.0)
+cmake_minimum_required(VERSION 3.11...3.20)
+project(
+  Yamchd
+  VERSION 0.1.0
+  DESCRIPTION "Don't be Yamchd"
+  LANGUAGES CXX )
 
-# specify the C++ standard
 set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-include(CTest)
-enable_testing()
+# Let's nicely support folders in IDEs
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-# Use our modified FindSDL2* modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Yamchd_SOURCE_DIR}/cmake")
-# Set an output directory for our binaries
-set(BIN_DIR ${Yamchd_SOURCE_DIR}/bin)
+# Only do these if this is the main project, and not if it is included through add_subdirectory
+if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME)
+  # Testing only available if this is the main app
+  # Note this needs to be done in the main CMakeLists
+  # since it calls enable_testing, which must be in the
+  # main CMakeLists.
+  include(CTest)
 
-# Bump up warning levels appropriately for clang, gcc & msvc
-# Also set debug/optimization flags depending on the build type. IDE users choose this when
-# selecting the build mode in their IDE
-if (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Weffc++ -Wmain -Wfloat-equal -pedantic")
-	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_DEBUG} -g")
-	set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_RELEASE} -O2")
-elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
-	if (CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-		string(REGEX REPLACE "/W[0-4]" "/W4" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-	else()
-		set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4")
-	endif()
+  # Docs only available if this is the main app
+  find_package(Doxygen)
+  if(Doxygen_FOUND)
+    #add_subdirectory(docs)
+  else()
+    message(STATUS "Doxygen not found, not building docs")
+  endif()
 endif()
-
-# Look up SDL2 and add the include directory to our include path
-find_package(SDL2 REQUIRED)
-include_directories(${SDL2_INCLUDE_DIR})
-find_package(SDL2_image REQUIRED)
-include_directories(${SDL2_IMAGE_INCLUDE_DIR})
-find_package(SDL2_ttf REQUIRED)
-include_directories(${SDL2_TTF_INCLUDE_DIR})
-find_package(SDL2_mixer REQUIRED)
-include_directories(${SDL2_MIXER_INCLUDE_DIR})
 
 add_executable(Yamchd main.cpp
 											sdl2_wrappers/sdl2_audio.cpp
@@ -57,9 +48,53 @@ add_executable(Yamchd main.cpp
 											src/game.cpp
 											src/palette.cpp
 											src/world.cpp )
-													
-target_link_libraries(Yamchd ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARY} ${SDL2_MIXER_LIBRARY})
-target_include_directories(Yamchd PUBLIC "${Yamchd_SOURCE_DIR}/include")
+
+target_compile_features(Yamchd PUBLIC cxx_std_17)
+set_target_properties(Yamchd PROPERTIES CXX_EXTENSIONS OFF)
+
+# # Use our modified FindSDL2* modules
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Yamchd_SOURCE_DIR}/cmake")
+
+if (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
+	set(MY_DEBUG_OPTIONS /W4)
+	set(MY_RELEASE_OPTIONS /w3)
+	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
+	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
+
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+	set(MY_DEBUG_OPTIONS -Wall -Wconversion -Wdouble-promotion -Weffc++ -Wextra -Wfloat-equal -Wmain -Wshadow -fstack-usage -pedantic -g3)
+	set(MY_RELEASE_OPTIONS -O2)
+	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
+	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
+
+elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+	set(MY_DEBUG_OPTIONS -Weverything)
+	set(MY_RELEASE_OPTIONS -O2)
+	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
+	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
+endif()
+
+# Set an output directory for our binaries
+set(BIN_DIR ${Yamchd_SOURCE_DIR}/bin)
+
+find_package(sdl2-image CONFIG)
+if (sdl2-image_FOUND)
+	message(STATUS "Using vcpkg toolchain file for SDL2 libs")
+	find_package(SDL2 CONFIG REQUIRED)
+	find_package(sdl2-image CONFIG REQUIRED)
+	find_package(sdl2-ttf CONFIG REQUIRED)
+	find_package(sdl2-mixer CONFIG REQUIRED)
+	target_link_libraries(Yamchd PRIVATE SDL2::SDL2 SDL2::SDL2main SDL2::SDL2_image SDL2::SDL2_ttf SDL2::SDL2_mixer)
+else()
+	message(STATUS "Using custom cmake find modules for SDL2 libs")
+	find_package(SDL2 REQUIRED)
+	find_package(SDL2_image REQUIRED)
+	find_package(SDL2_ttf REQUIRED)
+	find_package(SDL2_mixer REQUIRED)
+	include_directories(${SDL2_MIXER_INCLUDE_DIR})
+	target_link_libraries(Yamchd PRIVATE ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARY} ${SDL2_TTF_LIBRARY} ${SDL2_MIXER_LIBRARY})
+endif()
+
 install(TARGETS Yamchd RUNTIME DESTINATION ${BIN_DIR})
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
