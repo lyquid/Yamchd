@@ -114,7 +114,7 @@ void ktp::World::update() {
   }
 
   if (SDL2_Timer::getSDL2Ticks() - sand_time_ > 10) {
-    addGrain(GrainTypes::Sand, {static_cast<int>(cols_ * generateRand(0, 1)), 0});
+    addGrain(GrainTypes::Sand, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
     //addGrain({0, 0});
     //addGrain({cols_ / 2, 0});
     //addGrain({cols_ - 1, 0});

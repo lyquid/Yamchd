@@ -10,8 +10,8 @@ ktp::Game::Game() {
   event_bus_.setSystems(audio_sys_, input_sys_, output_sys_);
 }
 
-void ktp::Game::checkKeyStates(float delta_time) {
-  const Uint8* state = SDL_GetKeyboardState(nullptr);
+void ktp::Game::checkKeyStates(double delta_time) {
+  const auto state = SDL_GetKeyboardState(nullptr);
   /* if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_UP]) {
     player_.thrust(delta_time);
   } else {
@@ -114,7 +114,7 @@ bool ktp::Game::loadResources() {
   return true;
 }
 
-void ktp::Game::update(float delta_time) {
+void ktp::Game::update(double delta_time) {
   /* FPS */
   main_window_.setTitle(kGameTitle_ + " - FPS: " + std::to_string(fps_.average()));
   /* Event bus */

@@ -20,11 +20,11 @@ class Game {
   void handleSDL2KeyEvents(const SDL_Keycode& key);
   bool init();
   inline bool quit() const { return quit_; }
-  void update(float delta_time);
+  void update(double delta_time);
 
  private:
  
-  void checkKeyStates(float delta_time);
+  void checkKeyStates(double delta_time);
   void clean();
   bool initSDL2();
   bool loadResources();
