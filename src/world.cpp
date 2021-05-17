@@ -65,6 +65,65 @@ void ktp::World::addGrain(GrainTypes type, Uint32 where) {
   } 
 }
 
+void ktp::World::checkAutomatons(Uint32 index, int i, int j) {
+  Grain aux_gr {};
+  switch (world_grains_[index].type_) {
+    case GrainTypes::Acid:
+      if (i == rows_ - 1) {
+        toTheAbyss(index);
+        break;
+      } else if (!world_grains_[index].ignore_) {
+        handleAcid(index, i, j, aux_gr);
+        break;
+      }
+      break;
+    case GrainTypes::Blood:
+      if (i == rows_ - 1) {
+        toTheAbyss(index);
+        break;
+      } else if (!world_grains_[index].ignore_) {
+        handleWater(index, i, j, aux_gr);
+        break;
+      }
+      break;
+    case GrainTypes::Earth:
+      world_pixels_[index] = world_grains_[index].color_;
+      break;
+    case GrainTypes::Fire:
+      if (i == rows_ - 1) {
+        toTheAbyss(index);
+        break;
+      }
+      break;
+    case GrainTypes::Sand:
+      if (i == rows_ - 1) {
+        toTheAbyss(index);
+        break;
+      } else if (!world_grains_[index].ignore_) {
+        handleSand(index, i, j, aux_gr);
+        break;
+      }
+      break;
+    case GrainTypes::Steel:
+      world_pixels_[index] = world_grains_[index].color_;
+      break;
+    case GrainTypes::Water:
+      if (i == rows_ - 1) {
+        toTheAbyss(index);
+        break;
+      } else if (!world_grains_[index].ignore_) {
+        handleWater(index, i, j, aux_gr);
+        break;
+      }
+      break;
+    case GrainTypes::Void:
+      [[fallthrough]];
+    default:
+      world_pixels_[index] = ColorsARGB8::black;
+      break;
+  }
+}
+
 void ktp::World::draw() {
   world_texture_.render();
 }
@@ -261,81 +320,39 @@ void ktp::World::init(const SDL2_Renderer& ren, int rows, int cols) {
 }
 
 void ktp::World::update() {
-  Grain aux_gr {};
-  Uint32 current_index {};
 
   for (auto i = 0u; i < rows_ * cols_; ++i) world_grains_[i].ignore_ = false;
 
   world_texture_.lock((void**)&world_pixels_, &texture_pitch_);
 
-  for (int i = rows_ - 1; i >= 0; --i) {
-    for (int j = cols_ - 1; j >= 0; --j) {
-      current_index = getIndex(i, j);
-      if (world_grains_[current_index].life_ <= 0) {
-        toTheAbyss(current_index);
-      } else {
-        switch (world_grains_[current_index].type_) {
-          case GrainTypes::Acid:
-            if (i == rows_ - 1) {
-              toTheAbyss(current_index);
-              break;
-            } else if (!world_grains_[current_index].ignore_) {
-              handleAcid(current_index, i, j, aux_gr);
-              break;
-            }
-            break;
-          case GrainTypes::Blood:
-            if (i == rows_ - 1) {
-              toTheAbyss(current_index);
-              break;
-            } else if (!world_grains_[current_index].ignore_) {
-              handleWater(current_index, i, j, aux_gr);
-              break;
-            }
-            break;
-          case GrainTypes::Earth:
-            world_pixels_[current_index] = world_grains_[current_index].color_;
-            break;
-          case GrainTypes::Fire:
-            if (i == rows_ - 1) {
-              toTheAbyss(current_index);
-              break;
-            }
-            break;
-          case GrainTypes::Sand:
-            if (i == rows_ - 1) {
-              toTheAbyss(current_index);
-              break;
-            } else if (!world_grains_[current_index].ignore_) {
-              handleSand(current_index, i, j, aux_gr);
-              break;
-            }
-            break;
-          case GrainTypes::Steel:
-            world_pixels_[current_index] = world_grains_[current_index].color_;
-            break;
-          case GrainTypes::Water:
-            if (i == rows_ - 1) {
-              toTheAbyss(current_index);
-              break;
-            } else if (!world_grains_[current_index].ignore_) {
-              handleWater(current_index, i, j, aux_gr);
-              break;
-            }
-            break;
-          case GrainTypes::Void:
-            [[fallthrough]];
-          default:
-            world_pixels_[current_index] = ColorsARGB8::black;
-            break;
+  if (from_left_) {
+    for (int i = rows_ - 1; i >= 0; --i) {
+      for (int j = 0; j < cols_; ++j) {
+        const auto current_index {getIndex(i, j)};
+        if (world_grains_[current_index].life_ <= 0) {
+          toTheAbyss(current_index);
+        } else {
+          checkAutomatons(current_index, i, j);
         }
       }
     }
+  } else {
+    for (int i = rows_ - 1; i >= 0; --i) {
+      for (int j = cols_ - 1; j >= 0; --j) {
+        const auto current_index {getIndex(i, j)};
+        if (world_grains_[current_index].life_ <= 0) {
+          toTheAbyss(current_index);
+        } else {
+          checkAutomatons(current_index, i, j);
+        }
+      }
+    }         
   }
+  from_left_ = !from_left_;
 
   if (SDL2_Timer::getSDL2Ticks() - sand_time_ > 10) {
     addGrain(GrainTypes::Sand, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
-    if (SDL2_Timer::getSDL2Ticks() - acid_time_ < 30000) {
+    if (SDL2_Timer::getSDL2Ticks() - acid_time_ < 45000) {
       addGrain(GrainTypes::Acid, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
       addGrain(GrainTypes::Water, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
     } else {

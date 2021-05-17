@@ -34,6 +34,9 @@ class World {
 
   void addGrain(GrainTypes type, Uint32 where);
   inline void addGrain(GrainTypes type, const SDL_Point& where) { addGrain(type, getIndex(where)); }
+  //void checkFromTop();
+  //void checkFromBottom();
+  void checkAutomatons(Uint32 index, int i, int j);
   void drawRectangle(const SDL_Rect& rect, GrainTypes type);
   void generateWorld();
   template<typename T>
@@ -61,6 +64,8 @@ class World {
   Uint32 acid_time_ {};
   // which direction is checked first
   bool direction_flag_ {};
+  // where to start updating
+  bool from_left_ {};
 };
 
 } // end namespace ktp
