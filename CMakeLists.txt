@@ -52,7 +52,7 @@ add_executable(Yamchd main.cpp
 target_compile_features(Yamchd PUBLIC cxx_std_17)
 set_target_properties(Yamchd PROPERTIES CXX_EXTENSIONS OFF)
 
-# # Use our modified FindSDL2* modules
+# Use our modified FindSDL2* modules
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${Yamchd_SOURCE_DIR}/cmake")
 
 if (${CMAKE_CXX_COMPILER_ID} STREQUAL "MSVC")
@@ -68,7 +68,7 @@ elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
 	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
 
 elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-	set(MY_DEBUG_OPTIONS -Weverything)
+	set(MY_DEBUG_OPTIONS -Wall -Wconversion -Wdouble-promotion -Weffc++ -Wextra -Wfloat-equal -Wmain -Wshadow -pedantic -g3)
 	set(MY_RELEASE_OPTIONS -O2)
 	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:DEBUG>:${MY_DEBUG_OPTIONS}>")
 	target_compile_options(Yamchd PUBLIC "$<$<CONFIG:RELEASE>:${MY_RELEASE_OPTIONS}>")
