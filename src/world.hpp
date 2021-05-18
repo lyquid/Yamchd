@@ -34,8 +34,6 @@ class World {
 
   void addGrain(GrainTypes type, Uint32 where);
   inline void addGrain(GrainTypes type, const SDL_Point& where) { addGrain(type, getIndex(where)); }
-  //void checkFromTop();
-  //void checkFromBottom();
   void checkAutomatons(Uint32 index, int i, int j);
   void drawRectangle(const SDL_Rect& rect, GrainTypes type);
   void generateWorld();

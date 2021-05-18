@@ -38,7 +38,7 @@ void ktp::World::addGrain(GrainTypes type, Uint32 where) {
       world_pixels_[where] = ColorsARGB8::dark_grey;
       break;
     case GrainTypes::Sand:
-      world_grains_[where].life_ = 10;
+      world_grains_[where].life_ = 100;
       world_grains_[where].color_ = ColorsARGB8::dark_yellow;
       world_pixels_[where] = ColorsARGB8::dark_yellow;
       break;
@@ -150,7 +150,8 @@ void ktp::World::generateWorld() {
     drawRectangle({point.x, point.y, chunk_size.x, chunk_size.y}, GrainTypes::Earth);
   }
   //drawRectangle({165, 121, 50, 2}, GrainTypes::Earth); // middle bar
-  drawRectangle({0, static_cast<int>(rows_) - 2, static_cast<int>(cols_), 2}, GrainTypes::Steel);
+  drawRectangle({0, static_cast<int>(rows_) - 6, static_cast<int>(cols_), 1}, GrainTypes::Steel);
+  drawRectangle({0, static_cast<int>(rows_) - 1, static_cast<int>(cols_), 1}, GrainTypes::Steel);
 }
 
 void ktp::World::handleAcid(Uint32 index, int i, int j, Grain& aux_gr) {
@@ -213,33 +214,43 @@ void ktp::World::handleAcid(Uint32 index, int i, int j, Grain& aux_gr) {
 }
 
 void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
+  Uint32 aux {getIndex(i + 1, j)};
   // look down
-  if (world_grains_[getIndex(i + 1, j)].type_ == GrainTypes::Void 
-   || world_grains_[getIndex(i + 1, j)].type_ == GrainTypes::Water) {
-    swapPixels(index, getIndex(i + 1, j), aux_gr);
+  if (world_grains_[aux].type_ == GrainTypes::Void 
+   || world_grains_[aux].type_ == GrainTypes::Acid
+   || world_grains_[aux].type_ == GrainTypes::Water) {
+    swapPixels(index, aux, aux_gr);
   } else if (direction_flag_) {
     // look down right
+    aux = getIndex(i + 1, j + 1);
     if (j < cols_ - 1
-     && world_grains_[getIndex(i + 1, j + 1)].type_ == GrainTypes::Void 
-     || world_grains_[getIndex(i + 1, j + 1)].type_ == GrainTypes::Water) {
-      swapPixels(index, getIndex(i + 1, j + 1), aux_gr);
+     && (world_grains_[aux].type_ == GrainTypes::Void 
+     || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Water)) {
+      swapPixels(index, aux, aux_gr);
     // look down left
+    aux = getIndex(i + 1, j - 1);
     } else if (j != 0 
-     && world_grains_[getIndex(i + 1, j - 1)].type_ == GrainTypes::Void 
-     || world_grains_[getIndex(i + 1, j - 1)].type_ == GrainTypes::Water) {
-      swapPixels(index, getIndex(i + 1, j - 1), aux_gr);
+     && (world_grains_[aux].type_ == GrainTypes::Void 
+     || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Water)) {
+      swapPixels(index, aux, aux_gr);
     }
   } else {
+    aux = getIndex(i + 1, j - 1);
     // look down left
     if (j != 0 
-     && world_grains_[getIndex(i + 1, j - 1)].type_ == GrainTypes::Void 
-     || world_grains_[getIndex(i + 1, j - 1)].type_ == GrainTypes::Water) {
-      swapPixels(index, getIndex(i + 1, j - 1), aux_gr);
+     && (world_grains_[aux].type_ == GrainTypes::Void 
+     || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Water)) {
+      swapPixels(index, aux, aux_gr);
     // look down right
+    aux = getIndex(i + 1, j + 1);
     } else if (j < cols_ - 1 
-     && world_grains_[getIndex(i + 1, j + 1)].type_ == GrainTypes::Void 
-     || world_grains_[getIndex(i + 1, j + 1)].type_ == GrainTypes::Water) {
-      swapPixels(index, getIndex(i + 1, j + 1), aux_gr);
+     && (world_grains_[aux].type_ == GrainTypes::Void 
+     || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Water)) {
+      swapPixels(index, aux, aux_gr);
     }
   }
   direction_flag_ = !direction_flag_;
@@ -352,7 +363,7 @@ void ktp::World::update() {
 
   if (SDL2_Timer::getSDL2Ticks() - sand_time_ > 10) {
     addGrain(GrainTypes::Sand, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
-    if (SDL2_Timer::getSDL2Ticks() - acid_time_ < 45000) {
+    if (SDL2_Timer::getSDL2Ticks() - acid_time_ < 30000) {
       addGrain(GrainTypes::Acid, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
       addGrain(GrainTypes::Water, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
     } else {
