@@ -32,9 +32,9 @@ class Game {
   inline int scalateY(int n) const { return (n * render_size_.y) / window_size_.y; }
 
   inline static const std::string kGameTitle_{"Yamch'd"};
-  inline static constexpr SDL_Point render_size_{384, 288};
-  //inline static constexpr SDL_Point render_size_{1024, 768};
-  SDL_Point window_size_{1024, 768};
+  inline static constexpr SDL_Point render_size_{426, 240};
+  
+  SDL_Point window_size_{1280, 720};
   bool quit_{false};
 
   ktp::SDL2_Window main_window_{};
