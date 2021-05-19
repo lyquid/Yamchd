@@ -219,6 +219,7 @@ void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
   // look down
   if (world_grains_[aux].type_ == GrainTypes::Void 
    || world_grains_[aux].type_ == GrainTypes::Acid
+   || world_grains_[aux].type_ == GrainTypes::Blood
    || world_grains_[aux].type_ == GrainTypes::Water) {
     swapPixels(index, aux, aux_gr);
   } else if (direction_flag_) {
@@ -227,6 +228,7 @@ void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
     if (j < cols_ - 1
      && (world_grains_[aux].type_ == GrainTypes::Void 
      || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
      || world_grains_[aux].type_ == GrainTypes::Water)) {
       swapPixels(index, aux, aux_gr);
     // look down left
@@ -234,6 +236,7 @@ void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
     } else if (j != 0 
      && (world_grains_[aux].type_ == GrainTypes::Void 
      || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
      || world_grains_[aux].type_ == GrainTypes::Water)) {
       swapPixels(index, aux, aux_gr);
     }
@@ -243,6 +246,7 @@ void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
     if (j != 0 
      && (world_grains_[aux].type_ == GrainTypes::Void 
      || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
      || world_grains_[aux].type_ == GrainTypes::Water)) {
       swapPixels(index, aux, aux_gr);
     // look down right
@@ -250,6 +254,7 @@ void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
     } else if (j < cols_ - 1 
      && (world_grains_[aux].type_ == GrainTypes::Void 
      || world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
      || world_grains_[aux].type_ == GrainTypes::Water)) {
       swapPixels(index, aux, aux_gr);
     }

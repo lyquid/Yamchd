@@ -136,7 +136,7 @@ void ktp::Game::update(double delta_time) {
   /* Event bus */
   event_bus_.processEvents();
   /* World */
-  world_.rain(GrainTypes::Water);
+  world_.rain(GrainTypes::Blood);
   world_.update();
   if (draw_grain_) {
     int x{0}, y{0};
