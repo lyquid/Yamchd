@@ -28,6 +28,8 @@ class Game {
   void clean();
   bool initSDL2();
   bool loadResources();
+  inline int scalateX(int n) const { return (n * render_size_.x) / window_size_.x; }
+  inline int scalateY(int n) const { return (n * render_size_.y) / window_size_.y; }
 
   inline static const std::string kGameTitle_{"Yamch'd"};
   inline static constexpr SDL_Point render_size_{384, 288};
@@ -48,6 +50,8 @@ class Game {
   kuge::OutputSystem output_sys_{event_bus_};
   /* World */
   World world_ {};
+  GrainTypes selected_grain {GrainTypes::Earth};
+  bool draw_grain_ {};
 };
 
 } // end namespace ktp

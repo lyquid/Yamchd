@@ -21,6 +21,7 @@ void ktp::World::addGrain(GrainTypes type, Uint32 where) {
       world_pixels_[where] = ColorsARGB8::green;
       break;
     case GrainTypes::Blood:
+      world_grains_[where].life_ = 1;
       world_grains_[where].color_ = ColorsARGB8::red;
       world_pixels_[where] = ColorsARGB8::red;
       break;
@@ -147,10 +148,10 @@ void ktp::World::generateWorld() {
   for (auto& position: positions) {
     position = static_cast<unsigned int>(((rows_ * cols_) - 1) * generateRand(high_threshold, 1.f));
     const auto point {getPosition(position)};
-    drawRectangle({point.x, point.y, chunk_size.x, chunk_size.y}, GrainTypes::Earth);
+    // drawRectangle({point.x, point.y, chunk_size.x, chunk_size.y}, GrainTypes::Earth);
   }
-  //drawRectangle({165, 121, 50, 2}, GrainTypes::Earth); // middle bar
-  drawRectangle({0, static_cast<int>(rows_) - 6, static_cast<int>(cols_), 1}, GrainTypes::Steel);
+  // drawRectangle({165, 121, 50, 2}, GrainTypes::Earth); // middle bar
+  // drawRectangle({0, static_cast<int>(rows_) - 6, static_cast<int>(cols_), 1}, GrainTypes::Steel);
   drawRectangle({0, static_cast<int>(rows_) - 1, static_cast<int>(cols_), 1}, GrainTypes::Steel);
 }
 
@@ -326,8 +327,30 @@ void ktp::World::init(const SDL2_Renderer& ren, int rows, int cols) {
   generateWorld();
   world_texture_.unlock();
 
-  sand_time_ = SDL2_Timer::getSDL2Ticks();
-  acid_time_ = SDL2_Timer::getSDL2Ticks();
+  rain_time_ = SDL2_Timer::getSDL2Ticks();
+}
+
+void ktp::World::rain(GrainTypes type) {
+  if (SDL2_Timer::getSDL2Ticks() - rain_time_ > 10) {
+    addGrain(type, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
+    rain_time_ = SDL2_Timer::getSDL2Ticks();
+  } 
+}
+
+void ktp::World::swapPixels(Uint32 origin, Uint32 destination, Grain& aux) {
+  aux = world_grains_[origin];
+
+  world_grains_[origin] = world_grains_[destination];
+  world_pixels_[origin] = world_grains_[destination].color_;
+
+  world_grains_[destination] = aux;
+  world_grains_[destination].ignore_ = true;
+  world_pixels_[destination] = aux.color_;
+}
+
+void ktp::World::toTheAbyss(Uint32 index) {
+  world_grains_[index] = {GrainTypes::Void, ColorsARGB8::black};
+  world_pixels_[index] = ColorsARGB8::black;
 }
 
 void ktp::World::update() {
@@ -361,34 +384,5 @@ void ktp::World::update() {
   }
   from_left_ = !from_left_;
 
-  if (SDL2_Timer::getSDL2Ticks() - sand_time_ > 10) {
-    addGrain(GrainTypes::Sand, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
-    if (SDL2_Timer::getSDL2Ticks() - acid_time_ < 30000) {
-      addGrain(GrainTypes::Acid, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
-      addGrain(GrainTypes::Water, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
-    } else {
-      //total_time_ = SDL2_Timer::getSDL2Ticks();
-    }
-    //addGrain(GrainTypes::Acid, {static_cast<int>(cols_ * generateRand(0.f, 1.f)), 0});
-    //addGrain(GrainTypes::Sand, {cols_ / 2, 0});
-    sand_time_ = SDL2_Timer::getSDL2Ticks();
-  }
-  
   world_texture_.unlock();
-}
-
-void ktp::World::swapPixels(Uint32 origin, Uint32 destination, Grain& aux) {
-  aux = world_grains_[origin];
-
-  world_grains_[origin] = world_grains_[destination];
-  world_pixels_[origin] = world_grains_[destination].color_;
-
-  world_grains_[destination] = aux;
-  world_grains_[destination].ignore_ = true;
-  world_pixels_[destination] = aux.color_;
-}
-
-void ktp::World::toTheAbyss(Uint32 index) {
-  world_grains_[index] = {GrainTypes::Void, ColorsARGB8::black};
-  world_pixels_[index] = ColorsARGB8::black;
 }

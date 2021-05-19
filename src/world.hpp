@@ -27,7 +27,9 @@ class World {
   ~World();
 
   void draw();
+  void drawRectangle(const SDL_Rect& rect, GrainTypes type);
   void init(const SDL2_Renderer& ren, int rows, int cols);
+  void rain(GrainTypes type);
   void update();
 
  private:
@@ -35,7 +37,6 @@ class World {
   void addGrain(GrainTypes type, Uint32 where);
   inline void addGrain(GrainTypes type, const SDL_Point& where) { addGrain(type, getIndex(where)); }
   void checkAutomatons(Uint32 index, int i, int j);
-  void drawRectangle(const SDL_Rect& rect, GrainTypes type);
   void generateWorld();
   template<typename T>
   inline Uint32 getIndex(T i, T j) const { return i * cols_ + j; }
@@ -57,9 +58,8 @@ class World {
   // It's the number of bytes in a row returned by texture.lock()
   int texture_pitch_ {};
   unsigned int rows_ {}, cols_ {};
-  // timer used for sand generation
-  Uint32 sand_time_ {};
-  Uint32 acid_time_ {};
+  // timer used for rain
+  Uint32 rain_time_ {};
   // which direction is checked first
   bool direction_flag_ {};
   // where to start updating

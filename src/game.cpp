@@ -11,7 +11,8 @@ ktp::Game::Game() {
 }
 
 void ktp::Game::checkKeyStates(double delta_time) {
-  const auto state = SDL_GetKeyboardState(nullptr);
+  // const auto state = SDL_GetKeyboardState(nullptr);
+  //if (mouse_state[SDL_BUTTON_LEFT])
   /* if (state[SDL_SCANCODE_W] || state[SDL_SCANCODE_UP]) {
     player_.thrust(delta_time);
   } else {
@@ -55,13 +56,12 @@ void ktp::Game::handleSDL2Events() {
         input_sys_.postEvent(kuge::EventTypes::KeyPressed, SDL_GetKeyName(sdl_event_.key.keysym.sym));
         handleSDL2KeyEvents(sdl_event_.key.keysym.sym);
         break;
-      case SDL_MOUSEBUTTONDOWN: {
-        int x{0}, y{0};
-        if (SDL_GetMouseState(&x, &y) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-
-        }
+      case SDL_MOUSEBUTTONUP:
+        draw_grain_ = false;
         break;
-      }
+      case SDL_MOUSEBUTTONDOWN:
+        draw_grain_ = true;
+        break;
       default:
         break;
     }
@@ -73,6 +73,22 @@ void ktp::Game::handleSDL2KeyEvents(const SDL_Keycode& key) {
     case SDLK_ESCAPE:
       input_sys_.postEvent(kuge::EventTypes::ExitGame);
       quit_ = true;
+      break;
+    case SDLK_1:
+      selected_grain = GrainTypes::Earth;
+      logMessage("Earth selected");
+      break;
+    case SDLK_2:
+      selected_grain = GrainTypes::Water;
+      logMessage("Water selected");
+      break;
+    case SDLK_3:
+      selected_grain = GrainTypes::Acid;
+      logMessage("Acid selected");
+      break;
+    case SDLK_4:
+      selected_grain = GrainTypes::Sand;
+      logMessage("Sand selected");
       break;
     default:
       break;
@@ -120,5 +136,15 @@ void ktp::Game::update(double delta_time) {
   /* Event bus */
   event_bus_.processEvents();
   /* World */
+  world_.rain(GrainTypes::Water);
   world_.update();
+  if (draw_grain_) {
+    int x{0}, y{0};
+    constexpr SDL_Point chunk_size {5, 5};
+    if (SDL_GetMouseState(&x, &y) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
+      world_.drawRectangle({scalateX(x) - chunk_size.x / 2, scalateY(y) - chunk_size.y / 2, chunk_size.x, chunk_size.y}, selected_grain);
+    } else if (SDL_GetMouseState(&x, &y) & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
+      world_.drawRectangle({scalateX(x) - chunk_size.x / 2, scalateY(y) - chunk_size.y / 2, chunk_size.x, chunk_size.y}, GrainTypes::Void);
+    }
+  }
 }
