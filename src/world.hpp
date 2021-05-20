@@ -9,7 +9,7 @@ namespace ktp {
 inline float generateRand(float min, float max);
 
 enum class GrainTypes {
-  Acid, Blood, Earth, Fire, Rock, Sand, Snow, Steel, Void, Water,
+  Acid, Blood, Earth, Fire, Fume, Rock, Sand, Snow, Steel, Void, Water,
   count
 };
 
@@ -44,6 +44,7 @@ class World {
   inline Uint32 getIndex(const SDL_FPoint& pos) const { return static_cast<Uint32>(pos.y * cols_ + pos.x); }
   inline SDL_Point getPosition(Uint32 index) { return {index % cols_, index / cols_}; }
   inline void handleAcid(Uint32 index, int i, int j, Grain& aux_gr);
+  inline void handleFume(Uint32 index, int i, int j, Grain& aux_gr);
   inline void handleSand(Uint32 index, int i, int j, Grain& aux_gr);
   inline void handleWater(Uint32 index, int i, int j, Grain& aux_gr);
   void swapPixels(Uint32 origin, Uint32 destination, Grain& aux);

@@ -34,6 +34,11 @@ void ktp::World::addGrain(GrainTypes type, Uint32 where) {
       world_grains_[where].color_ = ColorsARGB8::red;
       world_pixels_[where] = ColorsARGB8::red;
       break;
+    case GrainTypes::Fume: 
+      world_grains_[where].life_ = 1;
+      world_grains_[where].color_ = 0x0341de95;
+      world_pixels_[where] = 0x0341de95;
+      break;
     case GrainTypes::Rock:
       world_grains_[where].color_ = ColorsARGB8::dark_grey;
       world_pixels_[where] = ColorsARGB8::dark_grey;
@@ -96,6 +101,15 @@ void ktp::World::checkAutomatons(Uint32 index, int i, int j) {
         break;
       }
       break;
+    case GrainTypes::Fume:
+      if (i == 0) {
+        toTheAbyss(index);
+        break;
+      } else if (!world_grains_[index].ignore_) {
+        handleFume(index, i, j, aux_gr);
+        break;
+      }
+      break;
     case GrainTypes::Sand:
       if (i == rows_ - 1) {
         toTheAbyss(index);
@@ -140,7 +154,7 @@ void ktp::World::drawRectangle(const SDL_Rect& rect, GrainTypes type) {
 void ktp::World::generateWorld() {
   constexpr auto chunks {4000u};
   constexpr SDL_Point chunk_size {5, 5};
-  constexpr auto high_threshold {0.33f};
+  constexpr auto high_threshold {0.66f};
   
   std::vector<unsigned int> positions {};
   positions.resize(chunks);
@@ -148,7 +162,7 @@ void ktp::World::generateWorld() {
   for (auto& position: positions) {
     position = static_cast<unsigned int>(((rows_ * cols_) - 1) * generateRand(high_threshold, 1.f));
     const auto point {getPosition(position)};
-    // drawRectangle({point.x, point.y, chunk_size.x, chunk_size.y}, GrainTypes::Earth);
+    drawRectangle({point.x, point.y, chunk_size.x, chunk_size.y}, GrainTypes::Earth);
   }
   // drawRectangle({165, 121, 50, 2}, GrainTypes::Earth); // middle bar
   // drawRectangle({0, static_cast<int>(rows_) - 6, static_cast<int>(cols_), 1}, GrainTypes::Steel);
@@ -163,9 +177,11 @@ void ktp::World::handleAcid(Uint32 index, int i, int j, Grain& aux_gr) {
       if (k >=0 && k < rows_ && l >= 0 && l < cols_ && (i != k || j != l)) {
         const auto neighbor {getIndex(k, l)};
         if (world_grains_[neighbor].type_ != GrainTypes::Void 
-         && world_grains_[neighbor].type_ != GrainTypes::Acid 
+         && world_grains_[neighbor].type_ != GrainTypes::Acid
+         && world_grains_[neighbor].type_ != GrainTypes::Fume
          && world_grains_[neighbor].type_ != GrainTypes::Water) {
           --world_grains_[neighbor].life_;
+          // if (world_grains_[neighbor].life_ < 0) addGrain(GrainTypes::Fume, neighbor);
         }
         if (world_grains_[neighbor].type_ == GrainTypes::Acid) {
           ++acid_count;
@@ -214,6 +230,85 @@ void ktp::World::handleAcid(Uint32 index, int i, int j, Grain& aux_gr) {
   direction_flag_ = !direction_flag_;
 }
 
+// WIP - NOT WORKING PROPERLY
+void ktp::World::handleFume(Uint32 index, int i, int j, Grain& aux_gr) {
+  // look up
+  Uint32 aux {getIndex(i - 1, j)};
+  if (world_grains_[aux].type_ == GrainTypes::Acid
+   || world_grains_[aux].type_ == GrainTypes::Blood
+   || world_grains_[aux].type_ == GrainTypes::Sand
+   || world_grains_[aux].type_ == GrainTypes::Water
+   || world_grains_[aux].type_ == GrainTypes::Void) {
+    world_grains_[index].direction_ = !world_grains_[index].direction_;
+    swapPixels(index, aux, aux_gr);
+    //swapPixels(aux, index, aux_gr);
+  // look up right
+  aux = getIndex(i - 1, j + 1);
+  } else if (j < cols_ - 1 
+   && (world_grains_[aux].type_ == GrainTypes::Acid
+   || world_grains_[aux].type_ == GrainTypes::Blood
+   || world_grains_[aux].type_ == GrainTypes::Sand
+   || world_grains_[aux].type_ == GrainTypes::Water
+   || world_grains_[aux].type_ == GrainTypes::Void)) {
+    swapPixels(index, aux, aux_gr);
+    //swapPixels(aux, index, aux_gr);
+  // look up left
+  aux = getIndex(i - 1, j - 1);
+  } else if (j != 0 
+   && (world_grains_[aux].type_ == GrainTypes::Acid
+   || world_grains_[aux].type_ == GrainTypes::Blood
+   || world_grains_[aux].type_ == GrainTypes::Sand
+   || world_grains_[aux].type_ == GrainTypes::Water
+   || world_grains_[aux].type_ == GrainTypes::Void)) {
+    swapPixels(index, aux, aux_gr);
+    //swapPixels(aux, index, aux_gr);
+  }
+
+  /* if (world_grains_[index].direction_) {
+    // look right
+    aux = getIndex(i, j + 1);
+    if (j < cols_ - 1 
+     && (world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
+     || world_grains_[aux].type_ == GrainTypes::Sand
+     || world_grains_[aux].type_ == GrainTypes::Water
+     || world_grains_[aux].type_ == GrainTypes::Void)) {
+      swapPixels(index, aux, aux_gr);
+    // look left
+    aux = getIndex(i, j - 1);
+    } else if (j != 0 
+     && (world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
+     || world_grains_[aux].type_ == GrainTypes::Sand
+     || world_grains_[aux].type_ == GrainTypes::Water
+     || world_grains_[aux].type_ == GrainTypes::Void)) {
+      world_grains_[index].direction_ = !world_grains_[index].direction_;
+      swapPixels(index, aux, aux_gr);
+    }
+  } else {
+    // look left
+    aux = getIndex(i, j - 1);
+    if (j != 0 
+     && (world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
+     || world_grains_[aux].type_ == GrainTypes::Sand
+     || world_grains_[aux].type_ == GrainTypes::Water
+     || world_grains_[aux].type_ == GrainTypes::Void)) {
+      swapPixels(index, aux, aux_gr);
+    // look right
+    aux = getIndex(i, j + 1);
+    } else if (j < cols_ - 1 
+     && (world_grains_[aux].type_ == GrainTypes::Acid
+     || world_grains_[aux].type_ == GrainTypes::Blood
+     || world_grains_[aux].type_ == GrainTypes::Sand
+     || world_grains_[aux].type_ == GrainTypes::Water
+     || world_grains_[aux].type_ == GrainTypes::Void)) {
+      world_grains_[index].direction_ = !world_grains_[index].direction_;
+      swapPixels(index, aux, aux_gr);
+    }
+  }*/
+}
+
 void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
   Uint32 aux {getIndex(i + 1, j)};
   // look down
@@ -241,8 +336,8 @@ void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
       swapPixels(index, aux, aux_gr);
     }
   } else {
-    aux = getIndex(i + 1, j - 1);
     // look down left
+    aux = getIndex(i + 1, j - 1);
     if (j != 0 
      && (world_grains_[aux].type_ == GrainTypes::Void 
      || world_grains_[aux].type_ == GrainTypes::Acid
