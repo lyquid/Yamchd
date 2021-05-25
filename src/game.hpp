@@ -50,8 +50,9 @@ class Game {
   kuge::OutputSystem output_sys_{event_bus_};
   /* World */
   World world_ {};
-  GrainTypes selected_grain {GrainTypes::Earth};
+  GrainTypes selected_grain_ {GrainTypes::Earth};
   bool draw_grain_ {};
+  bool rain_ {};
 };
 
 } // end namespace ktp

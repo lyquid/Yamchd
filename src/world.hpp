@@ -3,6 +3,7 @@
 
 #include "../sdl2_wrappers/sdl2_wrappers.hpp"
 #include "palette.hpp"
+#include <vector>
 
 namespace ktp {
 
@@ -24,19 +25,21 @@ struct Grain {
 class World {
  public:
 
-  ~World();
+  ~World() { delete[] world_grains_; }
 
   void draw();
   void drawRectangle(const SDL_Rect& rect, GrainTypes type);
   void init(const SDL2_Renderer& ren, int rows, int cols);
   void rain(GrainTypes type);
   void update();
+  void updateOnlyTheRectangle();
 
  private:
 
   void addGrain(GrainTypes type, Uint32 where);
   inline void addGrain(GrainTypes type, const SDL_Point& where) { addGrain(type, getIndex(where)); }
   void checkAutomatons(Uint32 index, int i, int j);
+  void checkMinimunRectangle();
   void generateWorld();
   template<typename T>
   inline Uint32 getIndex(T i, T j) const { return i * cols_ + j; }
@@ -50,6 +53,8 @@ class World {
   void swapPixels(Uint32 origin, Uint32 destination, Grain& aux);
   inline void toTheAbyss(Uint32 index);
 
+  // used to draw the rectangles for the updated sections
+  const SDL2_Renderer* renderer_;
   // final texture to be updated
   SDL2_Texture world_texture_ {};
   // pointer to the array of pixels returned by texture.lock()
@@ -65,6 +70,9 @@ class World {
   bool direction_flag_ {};
   // where to start updating
   bool from_left_ {};
+  // stuff for the "precision" update
+  std::vector<SDL_Point> coords_ {};
+  SDL_Rect bounding_box_ {};
 };
 
 } // end namespace ktp

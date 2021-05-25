@@ -1,13 +1,8 @@
 #include "world.hpp"
-#include <vector>
 
 float ktp::generateRand(float min, float max) {
   const auto random{static_cast<float>(rand()) / static_cast<float>(RAND_MAX)};
 	return min + (random * (max - min));
-}
-
-ktp::World::~World() {
-  delete[] world_grains_;
 }
 
 void ktp::World::addGrain(GrainTypes type, Uint32 where) {
@@ -68,7 +63,8 @@ void ktp::World::addGrain(GrainTypes type, Uint32 where) {
       world_grains_[where].color_ = ColorsARGB8::black;
       world_pixels_[where] = ColorsARGB8::black;
       break;
-  } 
+  }
+  coords_.push_back(getPosition(where));
 }
 
 void ktp::World::checkAutomatons(Uint32 index, int i, int j) {
@@ -139,8 +135,51 @@ void ktp::World::checkAutomatons(Uint32 index, int i, int j) {
   }
 }
 
+void ktp::World::checkMinimunRectangle() {
+  
+  int x_min {cols_};
+  int x_max {0};
+  int y_min {rows_};
+  int y_max {0};
+
+  for (const auto& coord: coords_) {
+    if (coord.x < x_min) {
+      if (coord.x - 1 < 0) {
+        x_min = 0;
+      } else {
+        x_min = coord.x - 1;
+      }
+    }
+    if (coord.x > x_max) {
+      if (coord.x + 1 > cols_) {
+        x_max = cols_;
+      } else {
+        x_max = coord.x + 1;
+      }
+    }
+    if (coord.y < y_min) {
+      if (coord.y - 1 < 0) {
+        y_min = 0;
+      } else {
+        y_min = coord.y - 1;
+      }
+    }
+    if (coord.y > y_max) {
+      if (coord.y + 1 > rows_) {
+        y_max = rows_;
+      } else {
+        y_max = coord.y + 1;
+      }
+    }
+  }
+  bounding_box_ = {x_min, y_min, x_max - x_min, y_max - y_min};
+  coords_.clear();
+}
+
 void ktp::World::draw() {
   world_texture_.render();
+  // renderer_->setDrawColor({255, 255, 0, 255});
+  // renderer_->drawRect(bounding_box_);
 }
 
 void ktp::World::drawRectangle(const SDL_Rect& rect, GrainTypes type) {
@@ -154,7 +193,7 @@ void ktp::World::drawRectangle(const SDL_Rect& rect, GrainTypes type) {
 void ktp::World::generateWorld() {
   constexpr auto chunks {4000u};
   constexpr SDL_Point chunk_size {5, 5};
-  constexpr auto high_threshold {0.66f};
+  constexpr auto high_threshold {0.33f};
   
   std::vector<unsigned int> positions {};
   positions.resize(chunks);
@@ -166,10 +205,11 @@ void ktp::World::generateWorld() {
   }
   // drawRectangle({165, 121, 50, 2}, GrainTypes::Earth); // middle bar
   // drawRectangle({0, static_cast<int>(rows_) - 6, static_cast<int>(cols_), 1}, GrainTypes::Steel);
-  drawRectangle({0, static_cast<int>(rows_) - 1, static_cast<int>(cols_), 1}, GrainTypes::Steel);
+  // drawRectangle({0, static_cast<int>(rows_) - 1, static_cast<int>(cols_), 1}, GrainTypes::Steel);
 }
 
 void ktp::World::handleAcid(Uint32 index, int i, int j, Grain& aux_gr) {
+  world_pixels_[index] = world_grains_[index].color_;
   auto acid_count {1};
   auto water_count {0};
   for (auto k = i - 1; k <= i + 1; ++k) {
@@ -232,6 +272,7 @@ void ktp::World::handleAcid(Uint32 index, int i, int j, Grain& aux_gr) {
 
 // WIP - NOT WORKING PROPERLY
 void ktp::World::handleFume(Uint32 index, int i, int j, Grain& aux_gr) {
+  world_pixels_[index] = world_grains_[index].color_;
   // look up
   Uint32 aux {getIndex(i - 1, j)};
   if (world_grains_[aux].type_ == GrainTypes::Acid
@@ -310,6 +351,7 @@ void ktp::World::handleFume(Uint32 index, int i, int j, Grain& aux_gr) {
 }
 
 void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
+  world_pixels_[index] = world_grains_[index].color_;
   Uint32 aux {getIndex(i + 1, j)};
   // look down
   if (world_grains_[aux].type_ == GrainTypes::Void 
@@ -358,6 +400,7 @@ void ktp::World::handleSand(Uint32 index, int i, int j, Grain& aux_gr) {
 }
 
 void ktp::World::handleWater(Uint32 index, int i, int j, Grain& aux_gr) {
+  world_pixels_[index] = world_grains_[index].color_;
   auto acid_count {0};
   auto water_count {1};
   for (auto k = i - 1; k <= i + 1; ++k) {
@@ -411,6 +454,7 @@ void ktp::World::handleWater(Uint32 index, int i, int j, Grain& aux_gr) {
 }
 
 void ktp::World::init(const SDL2_Renderer& ren, int rows, int cols) {
+  renderer_ = &ren;
   world_texture_.setRenderer(ren);
   world_texture_.create(SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_STREAMING, {(int)cols, (int)rows});
   rows_ = rows;
@@ -426,6 +470,10 @@ void ktp::World::init(const SDL2_Renderer& ren, int rows, int cols) {
   }
   generateWorld();
   world_texture_.unlock();
+  
+  coords_.clear();
+
+  bounding_box_ = {0, 0, static_cast<int>(cols_), static_cast<int>(rows_)};
 
   rain_time_ = SDL2_Timer::getSDL2Ticks();
 }
@@ -446,11 +494,15 @@ void ktp::World::swapPixels(Uint32 origin, Uint32 destination, Grain& aux) {
   world_grains_[destination] = aux;
   world_grains_[destination].ignore_ = true;
   world_pixels_[destination] = aux.color_;
+
+  coords_.push_back(getPosition(origin));
+  coords_.push_back(getPosition(destination));
 }
 
 void ktp::World::toTheAbyss(Uint32 index) {
   world_grains_[index] = {GrainTypes::Void, ColorsARGB8::black};
   world_pixels_[index] = ColorsARGB8::black;
+  // coords_.push_back(getPosition(index));
 }
 
 void ktp::World::update() {
@@ -482,6 +534,44 @@ void ktp::World::update() {
       }
     }         
   }
+  from_left_ = !from_left_;
+
+  world_texture_.unlock();
+  coords_.clear();
+}
+
+void ktp::World::updateOnlyTheRectangle() {
+  if (coords_.size() > 0 ) checkMinimunRectangle();
+
+  for (auto i = 0u; i < rows_ * cols_; ++i) world_grains_[i].ignore_ = false;
+
+  world_texture_.lock(&bounding_box_, (void**)&world_pixels_, &texture_pitch_);
+
+  if (from_left_) {
+    for (int i = bounding_box_.y + bounding_box_.h - 1; i >= bounding_box_.y; --i) {
+      for (int j = bounding_box_.x; j < bounding_box_.x + bounding_box_.w; ++j) {
+        const auto current_index {getIndex(i, j)};
+        if (world_grains_[current_index].life_ <= 0) {
+          toTheAbyss(current_index);
+          coords_.push_back({j, i});
+        } else {
+          checkAutomatons(current_index, i, j);
+        }
+      }
+    }
+  } else {
+    for (int i = bounding_box_.y + bounding_box_.h - 1; i >= bounding_box_.y; --i) {
+      for (int j = bounding_box_.x + bounding_box_.w - 1; j >= bounding_box_.x; --j) {
+        const auto current_index {getIndex(i, j)};
+        if (world_grains_[current_index].life_ <= 0) {
+          toTheAbyss(current_index);
+          coords_.push_back({j, i});
+        } else {
+          checkAutomatons(current_index, i, j);
+        }
+      }
+    }         
+  } 
   from_left_ = !from_left_;
 
   world_texture_.unlock();

@@ -74,20 +74,23 @@ void ktp::Game::handleSDL2KeyEvents(const SDL_Keycode& key) {
       input_sys_.postEvent(kuge::EventTypes::ExitGame);
       quit_ = true;
       break;
+    case SDLK_SPACE:
+      rain_ = !rain_;
+      break;
     case SDLK_1:
-      selected_grain = GrainTypes::Earth;
+      selected_grain_ = GrainTypes::Earth;
       logMessage("Earth selected");
       break;
     case SDLK_2:
-      selected_grain = GrainTypes::Water;
+      selected_grain_ = GrainTypes::Water;
       logMessage("Water selected");
       break;
     case SDLK_3:
-      selected_grain = GrainTypes::Acid;
+      selected_grain_ = GrainTypes::Acid;
       logMessage("Acid selected");
       break;
     case SDLK_4:
-      selected_grain = GrainTypes::Sand;
+      selected_grain_ = GrainTypes::Sand;
       logMessage("Sand selected");
       break;
     default:
@@ -136,13 +139,15 @@ void ktp::Game::update(double delta_time) {
   /* Event bus */
   event_bus_.processEvents();
   /* World */
-  //world_.rain(GrainTypes::Acid);
+  if (rain_) {
+    world_.rain(selected_grain_);
+  }
   world_.update();
   if (draw_grain_) {
     int x{0}, y{0};
     constexpr SDL_Point chunk_size {5, 5};
     if (SDL_GetMouseState(&x, &y) & SDL_BUTTON(SDL_BUTTON_LEFT)) {
-      world_.drawRectangle({scalateX(x) - chunk_size.x / 2, scalateY(y) - chunk_size.y / 2, chunk_size.x, chunk_size.y}, selected_grain);
+      world_.drawRectangle({scalateX(x) - chunk_size.x / 2, scalateY(y) - chunk_size.y / 2, chunk_size.x, chunk_size.y}, selected_grain_);
     } else if (SDL_GetMouseState(&x, &y) & SDL_BUTTON(SDL_BUTTON_RIGHT)) {
       world_.drawRectangle({scalateX(x) - chunk_size.x / 2, scalateY(y) - chunk_size.y / 2, chunk_size.x, chunk_size.y}, GrainTypes::Void);
     }
