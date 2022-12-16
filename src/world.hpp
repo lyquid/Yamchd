@@ -45,7 +45,7 @@ class World {
   inline Uint32 getIndex(T i, T j) const { return i * cols_ + j; }
   inline Uint32 getIndex(const SDL_Point& pos) const { return pos.y * cols_ + pos.x; }
   inline Uint32 getIndex(const SDL_FPoint& pos) const { return static_cast<Uint32>(pos.y * cols_ + pos.x); }
-  inline SDL_Point getPosition(Uint32 index) { return {index % cols_, index / cols_}; }
+  inline SDL_Point getPosition(Uint32 index) { return SDL_Point{static_cast<int>(index % cols_), static_cast<int>(index / cols_)}; }
   inline void handleAcid(Uint32 index, int i, int j, Grain& aux_gr);
   inline void handleFume(Uint32 index, int i, int j, Grain& aux_gr);
   inline void handleSand(Uint32 index, int i, int j, Grain& aux_gr);

@@ -34,7 +34,7 @@ class Game {
   inline static const std::string kGameTitle_{"Yamch'd"};
   inline static constexpr SDL_Point render_size_{426, 240};
   
-  SDL_Point window_size_{1280, 720};
+  SDL_Point window_size_{1920, 1080};
   bool quit_{false};
 
   ktp::SDL2_Window main_window_{};

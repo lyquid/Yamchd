@@ -1,4 +1,9 @@
 cmake_minimum_required(VERSION 3.11...3.20)
+
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake" CACHE STRING "")
+endif()
+
 project(
   Yamchd
   VERSION 0.1.0
@@ -77,14 +82,18 @@ endif()
 # Set an output directory for our binaries
 set(BIN_DIR ${Yamchd_SOURCE_DIR}/bin)
 
-find_package(sdl2-image CONFIG)
-if (sdl2-image_FOUND)
+if (DEFINED CMAKE_TOOLCHAIN_FILE)
 	message(STATUS "Using vcpkg toolchain file for SDL2 libs")
 	find_package(SDL2 CONFIG REQUIRED)
-	find_package(sdl2-image CONFIG REQUIRED)
-	find_package(sdl2-ttf CONFIG REQUIRED)
-	find_package(sdl2-mixer CONFIG REQUIRED)
-	target_link_libraries(Yamchd PRIVATE SDL2::SDL2 SDL2::SDL2main SDL2::SDL2_image SDL2::SDL2_ttf SDL2::SDL2_mixer)
+	find_package(SDL2_image CONFIG REQUIRED)
+	find_package(SDL2_ttf CONFIG REQUIRED)
+	find_package(SDL2_mixer CONFIG REQUIRED)
+	target_link_libraries(Yamchd PRIVATE 
+		$<TARGET_NAME_IF_EXISTS:SDL2::SDL2main> $<IF:$<TARGET_EXISTS:SDL2::SDL2>,SDL2::SDL2,SDL2::SDL2-static> 
+		$<IF:$<TARGET_EXISTS:SDL2_image::SDL2_image>,SDL2_image::SDL2_image,SDL2_image::SDL2_image-static> 
+		$<IF:$<TARGET_EXISTS:SDL2_ttf::SDL2_ttf>,SDL2_ttf::SDL2_ttf,SDL2_ttf::SDL2_ttf-static> 
+		$<IF:$<TARGET_EXISTS:SDL2_mixer::SDL2_mixer>,SDL2_mixer::SDL2_mixer,SDL2_mixer::SDL2_mixer-static>
+	)
 else()
 	message(STATUS "Using custom cmake find modules for SDL2 libs")
 	find_package(SDL2 REQUIRED)

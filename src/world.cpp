@@ -137,9 +137,9 @@ void ktp::World::checkAutomatons(Uint32 index, int i, int j) {
 
 void ktp::World::checkMinimunRectangle() {
   
-  int x_min {cols_};
+  int x_min {static_cast<int>(cols_)};
   int x_max {0};
-  int y_min {rows_};
+  int y_min {static_cast<int>(rows_)};
   int y_max {0};
 
   for (const auto& coord: coords_) {
